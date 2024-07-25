@@ -1,10 +1,9 @@
 package com.example.microservices.product_catalog;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,33 +15,37 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ProductCatalogService {
     
-    private static Map<String,Product> productCatalog = new HashMap<>();
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @PostMapping("/product")
-    public String addProduct(@RequestBody Product product){
-        productCatalog.put(product.getId(),product);
-        return "product added successfully";
+    public Product addProduct(@RequestBody Product product){
+        return mongoTemplate.insert(product);
     }
 
     @PutMapping("/product")
-    public String updateProduct(@RequestBody Product product){
-        productCatalog.put(product.getId(),product);
-        return "product updated successfully";
+    public Product updateProduct(@RequestBody Product product){
+        return mongoTemplate.save(product);        
     }
 
     @GetMapping("/product/{id}")
     public Product getProductDetails(@PathVariable  String id){
-        return productCatalog.get(id);
+        return mongoTemplate.findById(id,Product.class);
     }
+
 
     @DeleteMapping("/product/{id}")
     public String deleteProduct(@PathVariable String id) {
-        productCatalog.remove(id);
-        return "product deleted successfully";
+        Product toDeleteProduct = new Product();
+        toDeleteProduct.setId(id);
+
+        mongoTemplate.remove(toDeleteProduct);
+        return "Product Deleted-"+id;
     }
 
     @GetMapping("/product")
     public List<Product> getProductList(){
-        return new ArrayList<Product>(productCatalog.values());
+        return mongoTemplate.findAll(Product.class);
     }
+
 }
